@@ -1,6 +1,6 @@
 <script setup>
 defineProps({ work: Object })
-defineEmits(['close'])
+defineEmits(['close', 'share'])
 </script>
 
 <template>
@@ -22,6 +22,10 @@ defineEmits(['close'])
       <div class="divider"><span>背 景 与 要 点</span></div>
 
       <p class="body">{{ work.background }}</p>
+
+      <div class="sheet-actions">
+        <button class="share-btn" @click="$emit('share', work)">⤴ 生成分享图</button>
+      </div>
     </div>
   </div>
 </template>
@@ -140,4 +144,26 @@ defineEmits(['close'])
   color: var(--ink);
   text-align: justify;
 }
+.sheet-actions {
+  margin-top: 22px;
+  display: flex;
+  justify-content: flex-end;
+}
+.share-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 18px;
+  font-family: inherit;
+  font-size: .95rem;
+  letter-spacing: 1px;
+  color: #fff;
+  background: var(--red);
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  box-shadow: 0 3px 8px rgba(116, 27, 20, .35);
+  transition: background .2s ease;
+}
+.share-btn:hover { background: var(--red-deep); }
 </style>

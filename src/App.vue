@@ -1,8 +1,10 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, reactive, computed, nextTick } from 'vue'
+import { toPng } from 'html-to-image'
 import { works, eras } from './data/works.js'
 import WorkCard from './components/WorkCard.vue'
 import WorkDetail from './components/WorkDetail.vue'
+import ShareCard from './components/ShareCard.vue'
 
 const query = ref('')
 const activeEra = ref('all')
@@ -23,6 +25,59 @@ const filtered = computed(() => {
 
 function openWork(w) { selected.value = w }
 function closeWork() { selected.value = null }
+
+/* ===== 图片分享 ===== */
+const shareSource = ref(null)
+const shareCardRef = ref(null)
+const share = reactive({ open: false, preview: '', busy: false })
+
+async function generateShare(work) {
+  if (share.busy) return
+  share.busy = true
+  shareSource.value = work
+  await nextTick()
+  // 等待离屏卡片完成布局与字体回退
+  await new Promise((r) => setTimeout(r, 100))
+  try {
+    const node = shareCardRef.value?.$el
+    if (!node) return
+    const dataUrl = await toPng(node, {
+      pixelRatio: 2,
+      skipFonts: true,
+      cacheBust: true,
+      backgroundColor: '#f1e8d2',
+    })
+    share.preview = dataUrl
+    share.open = true
+  } catch (e) {
+    console.error('生成分享图失败', e)
+    alert('生成分享图失败，请重试')
+  } finally {
+    share.busy = false
+  }
+}
+
+function downloadShare() {
+  if (!share.preview || !shareSource.value) return
+  const a = document.createElement('a')
+  a.download = `${shareSource.value.title}-毛选分享.png`
+  a.href = share.preview
+  document.body.appendChild(a)
+  a.click()
+  a.remove()
+}
+
+async function copyShare() {
+  if (!share.preview) return
+  try {
+    const blob = await (await fetch(share.preview)).blob()
+    await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })])
+    alert('已复制到剪贴板，可粘贴到微信 / 微博等聊天窗口')
+  } catch (e) {
+    console.error(e)
+    alert('当前环境不支持直接复制，请改用「下载图片」')
+  }
+}
 </script>
 
 <template>
@@ -63,6 +118,7 @@ function closeWork() { selected.value = null }
         :key="w.id"
         :work="w"
         @open="openWork"
+        @share="generateShare"
       />
       <p v-if="filtered.length === 0" class="empty">未寻得相关篇章，请换个关键词试试。</p>
     </main>
@@ -71,7 +127,30 @@ function closeWork() { selected.value = null }
       <span>共 {{ works.length }} 篇 · 资料整理仅供学习研究</span>
     </footer>
 
-    <WorkDetail v-if="selected" :work="selected" @close="closeWork" />
+    <WorkDetail v-if="selected" :work="selected" @close="closeWork" @share="generateShare" />
+
+    <!-- 离屏渲染分享图模板 -->
+    <div class="offscreen">
+      <ShareCard v-if="shareSource" ref="shareCardRef" :work="shareSource" />
+    </div>
+
+    <!-- 分享弹层：预览 / 下载 / 复制 -->
+    <div v-if="share.open" class="share-overlay" @click.self="share.open = false">
+      <div class="share-sheet">
+        <div class="share-head">
+          <span>分享图预览</span>
+          <button class="share-x" @click="share.open = false" aria-label="关闭">×</button>
+        </div>
+        <div class="share-img-wrap">
+          <img :src="share.preview" class="share-img" alt="分享图" />
+        </div>
+        <div class="share-actions">
+          <button class="btn primary" @click="downloadShare">下载图片</button>
+          <button class="btn" @click="copyShare">复制图片</button>
+        </div>
+        <p class="share-tip">复制后可一键粘贴到微信 / 微博等社交平台</p>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -230,5 +309,104 @@ function closeWork() { selected.value = null }
   letter-spacing: 1px;
   border-top: 1px solid var(--line);
   padding-top: 20px;
+}
+
+/* ===== 离屏分享卡片（仅供导出，不在视口内） ===== */
+.offscreen {
+  position: fixed;
+  left: -10000px;
+  top: 0;
+  pointer-events: none;
+}
+
+/* ===== 分享弹层 ===== */
+.share-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: rgba(43, 35, 27, .62);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  animation: fade .2s ease;
+}
+.share-sheet {
+  width: min(440px, 100%);
+  background: var(--paper-light);
+  border: 1px solid var(--line);
+  box-shadow: 0 0 0 5px var(--paper-light), 0 0 0 6px var(--red), 0 24px 60px rgba(0,0,0,.45);
+  animation: rise .28s ease;
+  overflow: hidden;
+}
+.share-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: var(--ink);
+  border-bottom: 1px solid var(--line);
+}
+.share-x {
+  width: 32px;
+  height: 32px;
+  font-size: 1.4rem;
+  line-height: 1;
+  color: var(--ink-soft);
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all .2s ease;
+}
+.share-x:hover { color: #fff; background: var(--red); border-color: var(--red); }
+.share-img-wrap {
+  padding: 16px;
+  background: var(--paper);
+  max-height: 60vh;
+  overflow: auto;
+}
+.share-img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--line);
+}
+.share-actions {
+  display: flex;
+  gap: 12px;
+  padding: 16px 18px;
+}
+.btn {
+  flex: 1;
+  padding: 11px 0;
+  font-family: inherit;
+  font-size: .98rem;
+  letter-spacing: 1px;
+  color: var(--ink-soft);
+  background: var(--paper-light);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all .2s ease;
+}
+.btn:hover { border-color: var(--red); color: var(--red); }
+.btn.primary {
+  color: #fff;
+  background: var(--red);
+  border-color: var(--red);
+  box-shadow: 0 3px 8px rgba(116, 27, 20, .35);
+}
+.btn.primary:hover { background: var(--red-deep); border-color: var(--red-deep); color: #fff; }
+.share-tip {
+  margin: 0;
+  padding: 0 18px 16px;
+  font-size: .82rem;
+  color: var(--ink-soft);
+  text-align: center;
 }
 </style>

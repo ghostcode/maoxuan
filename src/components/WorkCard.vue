@@ -1,12 +1,14 @@
 <script setup>
 defineProps({ work: Object })
-defineEmits(['open'])
+defineEmits(['open', 'share'])
 </script>
 
 <template>
   <article class="card" @click="$emit('open', work)" tabindex="0"
            @keydown.enter="$emit('open', work)">
     <div class="card-frame">
+      <button class="share-btn" title="生成分享图" @click.stop="$emit('share', work)">⤴ 分享</button>
+
       <div class="card-top">
         <span class="year">{{ work.year }}</span>
         <span class="era">{{ work.era }}</span>
@@ -120,4 +122,29 @@ defineEmits(['open'])
   box-shadow: 0 2px 6px rgba(116,27,20,.4);
   opacity: .92;
 }
+.share-btn {
+  position: absolute;
+  top: -14px;
+  right: -14px;
+  z-index: 3;
+  font-family: inherit;
+  font-size: .8rem;
+  letter-spacing: 1px;
+  color: #fff;
+  background: var(--red);
+  border: 2px solid var(--paper-light);
+  border-radius: 20px;
+  padding: 5px 12px;
+  cursor: pointer;
+  opacity: 0;
+  transform: scale(.85);
+  transition: opacity .2s ease, transform .2s ease, background .2s ease;
+  box-shadow: 0 3px 8px rgba(116, 27, 20, .4);
+}
+.card:hover .share-btn,
+.card:focus-within .share-btn {
+  opacity: 1;
+  transform: scale(1);
+}
+.share-btn:hover { background: var(--red-deep); }
 </style>
