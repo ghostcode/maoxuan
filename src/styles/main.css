@@ -1,0 +1,41 @@
+/* ===== 字体：以思源宋体为主，系统宋体兜底 ===== */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;600;700;900&family=Ma+Shan+Zheng&display=swap');
+
+:root {
+  --paper:       #e9dfc6;
+  --paper-light: #f1e8d2;
+  --paper-dark:  #ddcfac;
+  --ink:         #2b231b;
+  --ink-soft:    #5a4d3b;
+  --red:         #9b2d20;
+  --red-deep:    #741b14;
+  --gold:        #b0894a;
+  --line:        #c9b78f;
+  --shadow:      rgba(43, 35, 27, 0.18);
+}
+
+* { box-sizing: border-box; }
+
+html, body { margin: 0; padding: 0; }
+
+body {
+  font-family: "Noto Serif SC", "Songti SC", "STSong", "SimSun", serif;
+  color: var(--ink);
+  background-color: var(--paper);
+  /* 做旧纸张质感：暖色径向光 + 极淡横纹纸纹 */
+  background-image:
+    radial-gradient(circle at 18% 12%, rgba(255, 255, 255, 0.30), transparent 42%),
+    radial-gradient(circle at 85% 8%, rgba(155, 45, 32, 0.10), transparent 46%),
+    radial-gradient(circle at 50% 120%, rgba(116, 27, 20, 0.12), transparent 55%),
+    repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.014) 0 2px, transparent 2px 4px);
+  min-height: 100vh;
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection { background: var(--red); color: var(--paper-light); }
+
+/* 细滚动条 */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb { background: var(--line); border-radius: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
