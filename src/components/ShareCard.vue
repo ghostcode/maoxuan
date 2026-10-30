@@ -154,7 +154,6 @@ const summary = computed(() => {
   margin: 0;
   padding: 24px 28px;
   font-size: 40px;
-  font-style: italic;
   line-height: 1.95;
   color: #741b14;
   background: rgba(155, 45, 32, .07);

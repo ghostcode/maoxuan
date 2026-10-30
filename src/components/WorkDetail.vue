@@ -109,7 +109,6 @@ defineEmits(['close', 'share'])
   margin: 0 0 16px;
   padding: 14px 18px;
   font-size: 1.05rem;
-  font-style: italic;
   color: var(--red-deep);
   background: rgba(155, 45, 32, .07);
   border-left: 4px solid var(--red);
